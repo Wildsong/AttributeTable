@@ -134,7 +134,12 @@ define([
           parent: this
         });
         this._resourceManager.setConfig(this.config);
-
+        //Broadcast the selection info data through the widget
+        this._resourceManager.onFeatureSelectionChange = lang.hitch(this, function (selectionInfo) {
+          this.publishData({
+            'selectionInfo': selectionInfo
+          });
+        });
         //eg: TabTheme maxmize or minimize
         this.own(topic.subscribe('changeMapPosition', lang.hitch(this, this._onMapPositionChange)));
         attrUtils.readLayerInfosObj(this.map).then(lang.hitch(this, function(layerInfosObj) {
@@ -855,7 +860,7 @@ define([
           style: "width: 100%;"
         }, tabDiv);
         html.setStyle(this.tabContainer.domNode, 'height', (this.normalHeight) + 'px');
-        
+
         //if(has("mozilla")){
         //  this.tabContainer.tablist.containerNode.style.width = "50000px";
         //}
@@ -864,7 +869,7 @@ define([
 
         var configInfos = this._resourceManager.getConfigInfos();
         var len = configInfos.length;
-        
+
         for (var j = 0; j < len; j++) {
           var configInfo = configInfos[j];
           if (configInfo.show) {
@@ -957,7 +962,7 @@ define([
         }
       },
 
-      addNewLayerTab: function(infoId, featureSet, closeable, isActive, index) {
+      addNewLayerTab: function(infoId, featureSet, closeable, isActive, index, viewInTableFlag) {
         var layerInfo = this._resourceManager.getLayerInfoById(infoId);
         if (!layerInfo) {
           return;
@@ -970,6 +975,7 @@ define([
         json.closable = closeable;
         json.layerType = this._layerTypes.FEATURELAYER;
         json.featureSet = featureSet;
+        json.viewInTableFlag = viewInTableFlag;
         if (page) {
           lang.mixin(page.params, json);
           this.onOpen();
@@ -1098,7 +1104,8 @@ define([
                 params.featureSet,
                 !!params.closeable,
                 !!params.isActive,
-                params.index);
+                params.index,
+                params.viewInTableFlag);
             } else {
               this.own(on(layerObject, "load",
                 lang.hitch(this,
@@ -1107,7 +1114,8 @@ define([
                   params.featureSet,
                   !!params.closeable,
                   !!params.isActive,
-                  params.index)));
+                  params.index,
+                  params.viewInTableFlag)));
             }
           } else if (params.url) {
             layer = new FeatureLayer(params.url);
@@ -1119,7 +1127,8 @@ define([
                   params.featureSet,
                   !!params.closeable,
                   !!params.isActive,
-                  params.index))
+                  params.index,
+                  params.viewInTableFlag))
             );
           }
         }), lang.hitch(this, function(err) {

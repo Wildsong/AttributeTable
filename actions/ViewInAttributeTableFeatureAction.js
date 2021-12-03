@@ -52,7 +52,8 @@ define([
           attrWidget.onReceiveData(null, null, {
             target: "AttributeTable",
             layerInfo: layerInfo,
-            featureSet: featureSet
+            featureSet: featureSet,
+            viewInTableFlag: true
           });
         }
       });

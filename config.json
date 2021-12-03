@@ -1,17 +1,5 @@
 {
-  "layerInfos": [
-    {
-      "name": "Taxlots",
-      "id": "Taxlots_835",
-      "layer": {
-        "url": "https://delta.co.clatsop.or.us/server/rest/services/Taxlots/FeatureServer/1"
-      },
-      "show": true,
-      "showAttachments": false,
-      "sortField": "OBJECTID",
-      "isDescending": false
-    }
-  ],
+  "layerInfos": [],
   "table": {
     "pageSizeOptions": [25, 50, 100, 1000]
   },

@@ -70,6 +70,7 @@ define([
   'jimu/SelectionManager',
   'jimu/CSVUtils',
   'jimu/utils',
+  "jimu/ArcadeUtils",
   '../utils',
   'dojo/query',
   'dojo/string',
@@ -133,6 +134,7 @@ define([
   SelectionManager,
   CSVUtils,
   jimuUtils,
+  ArcadeUtils,
   tableUtils,
   query,
   string,
@@ -1225,9 +1227,21 @@ define([
               }
             }
 
+            // Indicates whether it is 'view in table'
+            var selectedIds = this._getTableSelectedIds()
+            var viewInTableFlag = this.parent && this.parent.tabContainer.selectedChildWidget.params.viewInTableFlag
+            var viewInTableData = []
+            var exportViewInTableData = !_exportData.length && viewInTableFlag && !selectedIds.length
+            if(exportViewInTableData) {
+              viewInTableData = lang.clone(this.grid.store.data);
+              if((isSameProjection || !this.layer.url) && viewInTableData.length){
+                this._appendXY(viewInTableData);
+              }
+            }
             var options = {};
             var _outFields = this.getOutFields(!!_exportData.length);
-            options.datas = _exportData;
+            // 'view in table' export all in related table need export the data filtered
+            options.datas = exportViewInTableData ? viewInTableData : _exportData;
             options.fromClient = false;
             options.withGeometry = this.layer.geometryType === 'esriGeometryPoint';
             options.outFields = _outFields;
@@ -1888,10 +1902,14 @@ define([
         false, this.layer);
 
       // AttributeTable does not work
-      //when column name contains special character such as "." and "()"
+      // when column name contains special character such as "." and "()"
+      var expressionInfos = tableUtils.arcade.getExpressionInfosFromLayerInfo(this.layerInfo);
+      var expressionCache = ArcadeUtils.compileExpressions(expressionInfos);
       columns = tableUtils.generateColumnsFromFields(
         this.grid && this.grid.columns,
+        this.map,
         this.layerInfo,
+        expressionCache,
         results.fields, _typeIdFild, _types, (supportOrder && supportPage) || !exceededLimit,
         supportStatistics, this.layer
       );
@@ -1917,6 +1935,10 @@ define([
       var autoWidth = (20 * 1 + 100 * results.fields.length) < html.getMarginBox(this.domNode).w;
       //create dgrid, only one time
       this.createTable(columns, store, recordCounts, autoWidth);
+      //Use 'presentation' instead of default 'columnheader' for selectionHandler on header
+      var selectionHandleOnHeader = this.grid.domNode.querySelectorAll('.dgrid-header .dgrid-column-selectionHandle');
+      selectionHandleOnHeader.length > 0 && selectionHandleOnHeader[0].setAttribute('role', 'presentation');
+
       this._currentExtent = nExtent;
 
       var selectedFeatures = this.layer.getSelectedFeatures();
@@ -2447,7 +2469,11 @@ define([
           });
         }
         this.setSelectedNumber();
+        //emit the feature selected event
+        this.onFeatureSelectionChange();
       } else {
+        //emit the feature selected event
+        this.onFeatureSelectionChange();
         this._popupMessage(this.nls.dataNotAvailable);
       }
     },
@@ -2952,6 +2978,8 @@ define([
         if (ids.length > 0) {
           this._goToFeatures(ids, 'rowclick');
         } else {
+          //emit the feature selected event
+          this.onFeatureSelectionChange();
           this._setSelection([]);
         }
       }

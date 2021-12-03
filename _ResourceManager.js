@@ -94,8 +94,8 @@ define([
                 lang.delegate(this.config.layerInfos),
                 lang.hitch(this, function(layerInfo) {
                   var mLayerInfo = this._getLayerInfoById(layerInfo.id);
-                  var isVisible = this.config.syncWithLayers ? 
-                    mLayerInfo.isVisible() : 
+                  var isVisible = this.config.syncWithLayers ?
+                    mLayerInfo.isVisible() :
                     layerInfo.show;
                   if(isVisible && mLayerInfo) {
                     layerInfo.name = mLayerInfo.name || mLayerInfo.title;
@@ -227,6 +227,17 @@ define([
                 configedInfo: configInfo,
                 nls: this.nls,
                 parent: this.parent
+              });
+              //Once the feature is selected in the table
+              //Create selection object for all the layers
+              table.onFeatureSelectionChange = lang.hitch(this, function () {
+                var selectionInfo = {};
+                for (var layer in this.featureTableSet) {
+                  if (this.featureTableSet[layer]) {
+                    selectionInfo[layer] = this.featureTableSet[layer]["selectionRows"] || [];
+                  }
+                }
+                this.onFeatureSelectionChange(selectionInfo);
               });
               this.featureTableSet[tabId] = table;
               def.resolve({
@@ -513,7 +524,7 @@ define([
         if (!(rFields && rFields.length)) {
           return sFields;
         }
-        var validFields = [], 
+        var validFields = [],
             newFields = [];
         // find new fields
         for (var i = 0, len = rFields.length; i < len; i++) {
